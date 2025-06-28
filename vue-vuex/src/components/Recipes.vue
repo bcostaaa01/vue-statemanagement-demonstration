@@ -1,103 +1,63 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { computed } from 'vue'
 import { useStore } from 'vuex'
-import Recipes from './components/Recipes.vue'
+import Recipe from './Recipe.vue'
 
 const store = useStore()
 
 // Computed properties for reactive state access
 const recipes = computed(() => store.state.recipes)
-const loading = computed(() => store.state.loading)
-const error = computed(() => store.state.error)
+const selectedRecipe = computed(() => store.state.selectedRecipe)
 
-onMounted(() => {
-  store.dispatch('fetchRecipes')
-})
+const setSelectedRecipe = (recipe) => {
+  store.dispatch('setSelectedRecipe', recipe)
+}
 
-const retryFetch = () => {
-  store.dispatch('fetchRecipes')
+const clearSelectedRecipe = () => {
+  store.dispatch('clearSelectedRecipe')
 }
 </script>
 
 <template>
-  <div class="app">
-    <header class="app-header">
-      <h1>🍳 Recipe Collection</h1>
-      <p>Discover delicious recipes from around the world</p>
-    </header>
-
-    <main class="app-main">
-      <div v-if="loading" class="loading">
-        <p>Loading recipes...</p>
+  <div class="recipes-container">
+    <div class="recipes-grid">
+      <div 
+        v-for="recipe in recipes" 
+        :key="recipe.id" 
+        class="recipe-preview"
+        @click="setSelectedRecipe(recipe)"
+      >
+        <div class="recipe-image" v-if="recipe.image">
+          <img :src="recipe.image" :alt="recipe.name" />
+        </div>
+        <div class="recipe-info">
+          <h3>{{ recipe.name }}</h3>
+          <div class="recipe-meta">
+            <span class="cuisine">{{ recipe.cuisine }}</span>
+            <span class="difficulty">{{ recipe.difficulty }}</span>
+          </div>
+          <div class="recipe-stats">
+            <span>⏱️ {{ recipe.prepTimeMinutes + recipe.cookTimeMinutes }} min</span>
+            <span>👥 {{ recipe.servings }} servings</span>
+            <span>⭐ {{ recipe.rating }}</span>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <div v-else-if="error" class="error">
-        <p>{{ error }}</p>
-        <button @click="retryFetch" class="retry-btn">
-          Try Again
-        </button>
+    <!-- Recipe Detail Modal -->
+    <div v-if="selectedRecipe" class="modal-overlay" @click="clearSelectedRecipe()">
+      <div class="modal-content" @click.stop>
+        <button class="close-btn" @click="clearSelectedRecipe()">×</button>
+        <Recipe :recipe="selectedRecipe" />
       </div>
-
-      <div v-else-if="recipes.length === 0" class="empty-state">
-        <p>No recipes found.</p>
-      </div>
-
-      <div v-else>
-        <Recipes />
-      </div>
-    </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.app {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-}
-
-.app-header {
-  text-align: center;
-  color: white;
-  margin-bottom: 30px;
-}
-
-.app-header h1 {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.app-header p {
-  font-size: 1.1rem;
-  opacity: 0.9;
-}
-
-.app-main {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.loading, .error, .empty-state {
-  text-align: center;
-  color: white;
-  font-size: 1.2rem;
-  padding: 40px;
-}
-
-.retry-btn {
-  background: #42b883;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-top: 15px;
-}
-
-.retry-btn:hover {
-  background: #369870;
+.recipes-container {
+  width: 100%;
 }
 
 .recipes-grid {
@@ -220,10 +180,6 @@ const retryFetch = () => {
 @media (max-width: 768px) {
   .recipes-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .app-header h1 {
-    font-size: 2rem;
   }
   
   .modal-content {
