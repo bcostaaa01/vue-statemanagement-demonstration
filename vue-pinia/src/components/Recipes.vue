@@ -1,94 +1,50 @@
 <script setup>
-import { onMounted } from 'vue'
-import { useRecipesStore } from './stores/recipes'
-import Recipes from './components/Recipes.vue'
+import { useRecipesStore } from '../stores/recipes'
+import Recipe from './Recipe.vue'
 
 const recipesStore = useRecipesStore()
-
-onMounted(() => {
-  recipesStore.fetchRecipes()
-})
 </script>
 
 <template>
-  <div class="app">
-    <header class="app-header">
-      <h1>🍳 Recipe Collection</h1>
-      <p>Discover delicious recipes from around the world</p>
-    </header>
-
-    <main class="app-main">
-      <div v-if="recipesStore.loading" class="loading">
-        <p>Loading recipes...</p>
+  <div class="recipes-container">
+    <div class="recipes-grid">
+      <div 
+        v-for="recipe in recipesStore.recipes" 
+        :key="recipe.id" 
+        class="recipe-preview"
+        @click="recipesStore.setSelectedRecipe(recipe)"
+      >
+        <div class="recipe-image" v-if="recipe.image">
+          <img :src="recipe.image" :alt="recipe.name" />
+        </div>
+        <div class="recipe-info">
+          <h3>{{ recipe.name }}</h3>
+          <div class="recipe-meta">
+            <span class="cuisine">{{ recipe.cuisine }}</span>
+            <span class="difficulty">{{ recipe.difficulty }}</span>
+          </div>
+          <div class="recipe-stats">
+            <span>⏱️ {{ recipe.prepTimeMinutes + recipe.cookTimeMinutes }} min</span>
+            <span>👥 {{ recipe.servings }} servings</span>
+            <span>⭐ {{ recipe.rating }}</span>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <div v-else-if="recipesStore.error" class="error">
-        <p>{{ recipesStore.error }}</p>
-        <button @click="recipesStore.fetchRecipes()" class="retry-btn">
-          Try Again
-        </button>
+    <!-- Recipe Detail Modal -->
+    <div v-if="recipesStore.selectedRecipe" class="modal-overlay" @click="recipesStore.clearSelectedRecipe()">
+      <div class="modal-content" @click.stop>
+        <button class="close-btn" @click="recipesStore.clearSelectedRecipe()">×</button>
+        <Recipe :recipe="recipesStore.selectedRecipe" />
       </div>
-
-      <div v-else-if="recipesStore.recipes.length === 0" class="empty-state">
-        <p>No recipes found.</p>
-      </div>
-
-      <div v-else>
-        <Recipes />
-      </div>
-    </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.app {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-}
-
-.app-header {
-  text-align: center;
-  color: white;
-  margin-bottom: 30px;
-}
-
-.app-header h1 {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.app-header p {
-  font-size: 1.1rem;
-  opacity: 0.9;
-}
-
-.app-main {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.loading, .error, .empty-state {
-  text-align: center;
-  color: white;
-  font-size: 1.2rem;
-  padding: 40px;
-}
-
-.retry-btn {
-  background: #42b883;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-top: 15px;
-}
-
-.retry-btn:hover {
-  background: #369870;
+.recipes-container {
+  width: 100%;
 }
 
 .recipes-grid {
@@ -193,9 +149,9 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  border-radius: 5%;
+  width: 5px;
+  height: 5px;
   font-size: 1.5rem;
   cursor: pointer;
   z-index: 1001;
@@ -211,10 +167,6 @@ onMounted(() => {
 @media (max-width: 768px) {
   .recipes-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .app-header h1 {
-    font-size: 2rem;
   }
   
   .modal-content {
